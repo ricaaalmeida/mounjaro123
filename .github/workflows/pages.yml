@@ -1,0 +1,71 @@
+name: Deploy GitHub Pages (frontend from task)
+on:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # usa PNPM se houver pnpm-lock.yaml; caso contrário, cai no npm
+      - name: Detect package manager
+        id: pm
+        run: |
+          if [ -f task/task_manager_frontend/pnpm-lock.yaml ]; then
+            echo "pm=pnpm" >> $GITHUB_OUTPUT
+          else
+            echo "pm=npm" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PNPM (if needed)
+        if: steps.pm.outputs.pm == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install deps (frontend)
+        working-directory: task/task_manager_frontend
+        run: |
+          if [ "${{ steps.pm.outputs.pm }}" = "pnpm" ]; then
+            pnpm install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: Build (frontend)
+        working-directory: task/task_manager_frontend
+        run: |
+          if [ "${{ steps.pm.outputs.pm }}" = "pnpm" ]; then
+            pnpm run build
+          else
+            npm run build
+          fi
+
+      # SPA fallback para GitHub Pages
+      - name: Copy 404
+        run: cp task/task_manager_frontend/dist/index.html task/task_manager_frontend/dist/404.html || true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: task/task_manager_frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
