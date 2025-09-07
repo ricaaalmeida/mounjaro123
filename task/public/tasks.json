@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "title": "Aprender React",
+    "description": "Estudar os fundamentos do React, incluindo Hooks e Context API.",
+    "completed": false
+  },
+  {
+    "id": 2,
+    "title": "Construir um site com Flask",
+    "description": "Desenvolver um backend simples com Flask para gerenciar usuários.",
+    "completed": true
+  },
+  {
+    "id": 3,
+    "title": "Fazer compras",
+    "description": "Comprar frutas, legumes e pão.",
+    "completed": false
+  }
+]
+
